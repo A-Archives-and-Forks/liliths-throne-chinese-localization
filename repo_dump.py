@@ -33,13 +33,13 @@ class Repo:
         if not path.exists():
             path.mkdir()
         try:
+            headers = {"Accept": "application/vnd.github+json"}
+            if GITHUB_PUBLIC_ACCESS_TOKEN:  # 可选:提升 API 限流;未配置则匿名访问公开仓库
+                headers["Authorization"] = "Bearer " + GITHUB_PUBLIC_ACCESS_TOKEN
             with requests.get(
                 api_url,
                 stream=True,
-                headers={
-                    "Accept": "application/vnd.github+json",
-                    "Authorization": GITHUB_PUBLIC_ACCESS_TOKEN,
-                },
+                headers=headers,
             ) as r:
                 if r.status_code == 200 and len(r.content) > 0:
                     self.latest_commit = r.json()[0]["sha"]

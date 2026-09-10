@@ -1,4 +1,5 @@
 from typing import Dict
+import os
 
 PROXY_URL = "https://ghproxy.com/"
 
@@ -15,7 +16,12 @@ REPO_BRANCH: Dict = {"main": "dev", "mod": "main"}
 PARATRANZ_API_BASE_URL = "https://paratranz.cn/api"
 PARATRANZ_PROJECT_ID: Dict = {"main": "8288", "mod": "9191"}
 
-GITHUB_PUBLIC_ACCESS_TOKEN = "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"
+# GitHub token 仅供 repo_dump 查询公开仓库最新 commit 时提升 API 限流(60/h -> 5000/h),
+# 非必需:不设置时匿名请求也能正常工作(repo_dump 失败会回退 latest_commit="unknown")。
+# 不要在代码中硬编码 token —— 通过环境变量 GITHUB_PUBLIC_ACCESS_TOKEN 或 GITHUB_TOKEN 提供。
+GITHUB_PUBLIC_ACCESS_TOKEN = os.environ.get(
+    "GITHUB_PUBLIC_ACCESS_TOKEN"
+) or os.environ.get("GITHUB_TOKEN", "")
 
 PREVIOUS_GAME_VERSION = "0.4.11.1"
 
