@@ -2,11 +2,40 @@ from pathlib import Path
 from urllib import request
 import requests
 import os
+import time
 import zipfile
 import shutil
 
 from const import *
 from logger import logger
+
+
+def urlretrieve_with_retry(
+    url: str,
+    file_path: Path,
+    reporthook=None,
+    attempts: int = 5,
+    delay: float = 3.0,
+) -> Path:
+    """urlretrieve with retries.
+
+    本机到 paratranz.cn / githubusercontent 的 TLS 握手会间歇性失败
+    (`SSL: UNEXPECTED_EOF_WHILE_READING`)，urlretrieve 不带重试会直接中断整条流水线。
+    每次失败后删除半截文件再重试。
+    """
+    last_error = None
+    for attempt in range(1, attempts + 1):
+        try:
+            request.urlretrieve(url, file_path, reporthook=reporthook)
+            return file_path
+        except Exception as error:  # SSL / timeout / connection reset
+            last_error = error
+            logger.warning("下载失败(%s/%s)：%s —— %s", attempt, attempts, url, error)
+            if file_path.exists():
+                os.remove(file_path)
+            if attempt < attempts:
+                time.sleep(delay)
+    raise last_error
 
 
 class Repo:
@@ -52,7 +81,7 @@ class Repo:
         if not file_path.exists() and self.latest_commit != "unknown":
             for existing_file in path.glob("repo-latest-*.zip"):
                 os.remove(existing_file)
-            request.urlretrieve(
+            urlretrieve_with_retry(
                 download_url, path / f"repo-latest-{self.latest_commit}.zip"
             )
 
@@ -92,7 +121,7 @@ class Repo:
         opener.addheaders = [("Authorization", self.paratranz_access_token)]
         request.install_opener(opener)
 
-        request.urlretrieve(download_url, file_path, reporthook=reporthook)
+        urlretrieve_with_retry(download_url, file_path, reporthook=reporthook)
 
     def unzip_latest_dict(self, old_dict_dir) -> None:
         zip_path = Path(DOWNLOAD_DIR) / f"dict-latest.zip"
