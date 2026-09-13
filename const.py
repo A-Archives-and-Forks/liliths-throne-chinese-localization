@@ -23,7 +23,7 @@ GITHUB_PUBLIC_ACCESS_TOKEN = os.environ.get(
     "GITHUB_PUBLIC_ACCESS_TOKEN"
 ) or os.environ.get("GITHUB_TOKEN", "")
 
-PREVIOUS_GAME_VERSION = "0.4.11.1"
+PREVIOUS_GAME_VERSION = "0.4.11.6"
 
 
 DOWNLOAD_DIR = "./downloads"
